@@ -1,0 +1,16 @@
+meta {
+  name: Get Device Info
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://{{DIRIGERA_IP}}:8443/v1/devices/13406ed7-6b67-461d-87d5-44c9dbed844e_2
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

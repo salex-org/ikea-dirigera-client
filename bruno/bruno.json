@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "IKEA Smart Home",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

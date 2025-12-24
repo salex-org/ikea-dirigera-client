@@ -1,0 +1,16 @@
+meta {
+  name: List Devices
+  type: http
+  seq: 2
+}
+
+get {
+  url: https://{{DIRIGERA_IP}}:8443/v1/devices
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

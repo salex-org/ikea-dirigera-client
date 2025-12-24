@@ -1,0 +1,16 @@
+meta {
+  name: Get Scene Info
+  type: http
+  seq: 2
+}
+
+get {
+  url: https://{{DIRIGERA_IP}}:8443/v1/scenes/5bcc3ab4-22f7-4653-af39-41c6b63686ef
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

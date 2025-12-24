@@ -1,0 +1,16 @@
+meta {
+  name: Install Firmware Update
+  type: http
+  seq: 3
+}
+
+put {
+  url: https://{{DIRIGERA_IP}}:8443/v1/hub/ota/update
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

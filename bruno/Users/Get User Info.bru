@@ -1,0 +1,16 @@
+meta {
+  name: Get User Info
+  type: http
+  seq: 3
+}
+
+get {
+  url: https://{{DIRIGERA_IP}}:8443/v1/users/b7261b94-a9ae-4b59-a7b3-a977311ca659
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,22 @@
+meta {
+  name: Set Current Users Name
+  type: http
+  seq: 4
+}
+
+patch {
+  url: https://{{DIRIGERA_IP}}:8443/v1/users/me
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "another-name"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
