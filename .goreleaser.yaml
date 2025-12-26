@@ -1,0 +1,49 @@
+version: 2
+project_name: ikea-dirigera-cli
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: ikea-dirigera-cli
+    main: ./cmd/main.go
+    binary: ikea
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - formats: [ 'tar.gz' ]
+    format_overrides:
+      - goos: windows
+        formats: [ 'zip' ]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+# Empfohlener Weg ab v2.10 für Homebrew (Taps)
+homebrew_casks:
+  - name: ikea-dirigera-cli
+    repository:
+      owner: salex-org
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    homepage: "https://github.com/salex-org/ikea-dirigera-client"
+    description: "A CLI for the IKEA DIRIGERA Smart-Home-Hub"
+    license: MIT
+
+checksum:
+  name_template: "checksums.txt"
+snapshot:
+  version_template: "{{ incpatch .Version }}-snapshot"
+#changelog:
+#  sort: asc
+#  filters:
+#    exclude:
+#      - "^docs:"
+#      - "^test:"
