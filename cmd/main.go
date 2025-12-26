@@ -38,6 +38,12 @@ func main() {
 	}
 
 	switch os.Args[1] {
+	case "token":
+		err := initialize(&currentContext)
+		if err != nil {
+			log.Fatal(err)
+		}
+		showToken(currentContext)
 	case "scan":
 		listHubs()
 	case "authorize":
@@ -64,6 +70,10 @@ func main() {
 	default:
 		fmt.Printf("Unknown command: %s\n", os.Args[1])
 	}
+}
+
+func showToken(cliContext Context) {
+	fmt.Printf("Token: %s\n", cliContext.Authorization.AccessToken)
 }
 
 func listHubs() {

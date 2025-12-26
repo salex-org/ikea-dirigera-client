@@ -15,20 +15,58 @@ import (
 )
 
 type Event struct {
-	ID     string          `json:"id"`
-	Time   time.Time       `json:"time"`
-	Source string          `json:"source"`
-	Type   string          `json:"type"`
-	Device EventDeviceData `json:"data"`
+	ID     string    `json:"id"`
+	Time   time.Time `json:"time"`
+	Source string    `json:"source"`
+	Type   string    `json:"type"`
+	Device Device    `json:"data"`
 }
 
-type EventDeviceData struct {
+type Device struct {
 	ID           string                 `json:"id"`
 	Type         string                 `json:"type"`
 	DetailedType string                 `json:"deviceType"`
 	IsReachable  bool                   `json:"isReachable"`
+	CreatedAt    time.Time              `json:"createdAt"`
 	LastSeen     time.Time              `json:"lastSeen"`
 	Attributes   map[string]interface{} `json:"attributes"`
+}
+
+type Room struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type Scene struct {
+	ID        string    `json:"id"`
+	Info      Info      `json:"info"`
+	Type      string    `json:"type"`
+	CreatedAt time.Time `json:"createdAt"`
+	Triggers  []Trigger `json:"triggers"`
+	Actions   []Action  `json:"actions"`
+}
+
+type Trigger struct {
+	ID       string `json:"id"`
+	Type     string `json:"type"`
+	Disabled bool   `json:"disabled"`
+}
+
+type Action struct {
+	ID         string                 `json:"id"`
+	Type       string                 `json:"type"`
+	DeviceID   string                 `json:"deviceId"`
+	Attributes map[string]interface{} `json:"attributes"`
+}
+
+type Info struct {
+	Name string `json:"name"`
+}
+
+type User struct {
+	ID        string    `json:"uid"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type EventHandler func(Event)
@@ -38,11 +76,17 @@ type handlerRegistration struct {
 	Types   []string
 }
 
-type Device struct {
-}
-
 type Client interface {
 	ListDevices() ([]*Device, error)
+	GetDevice(deviceID string) (*Device, error)
+	ListRooms() ([]*Room, error)
+	GetRoom(roomID string) (*Room, error)
+	ListScenes() ([]*Scene, error)
+	GetScene(sceneID string) (*Scene, error)
+	ListUsers() ([]*User, error)
+	GetUser(userID string) (*User, error)
+	GetCurrentUser() (*User, error)
+	DeleteUser(userID string) error
 	RegisterEventHandler(handler EventHandler, eventTypes ...string)
 	SetEventLog(writer io.Writer)
 	ListenForEvents() error
@@ -106,6 +150,185 @@ func (c *client) ListDevices() ([]*Device, error) {
 	}
 
 	return devices, nil
+}
+
+func (c *client) GetDevice(deviceID string) (*Device, error) {
+	targetURL := fmt.Sprintf("https://%s/devices/%s", c.endpoint, deviceID)
+	response, err := c.httpClient.Get(targetURL)
+	if err != nil {
+		return nil, fmt.Errorf("error reading device %s from %s: %w", deviceID, targetURL, err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("error reading device %s from %s: Received status code %d", deviceID, targetURL, response.StatusCode)
+	}
+
+	var device *Device
+	if err := json.NewDecoder(response.Body).Decode(&device); err != nil {
+		return nil, fmt.Errorf("error decoding get device response: %w", err)
+	}
+
+	return device, nil
+}
+
+func (c *client) ListRooms() ([]*Room, error) {
+	targetURL := fmt.Sprintf("https://%s/rooms", c.endpoint)
+	response, err := c.httpClient.Get(targetURL)
+	if err != nil {
+		return nil, fmt.Errorf("error listing rooms from %s: %w", targetURL, err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("error listing rooms from %s: Received status code %d", targetURL, response.StatusCode)
+	}
+
+	var rooms []*Room
+	if err := json.NewDecoder(response.Body).Decode(&rooms); err != nil {
+		return nil, fmt.Errorf("error decoding rooms response: %w", err)
+	}
+
+	return rooms, nil
+}
+
+func (c *client) GetRoom(roomID string) (*Room, error) {
+	targetURL := fmt.Sprintf("https://%s/rooms/%s", c.endpoint, roomID)
+	response, err := c.httpClient.Get(targetURL)
+	if err != nil {
+		return nil, fmt.Errorf("error reading room %s from %s: %w", roomID, targetURL, err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("error reading room %s from %s: Received status code %d", roomID, targetURL, response.StatusCode)
+	}
+
+	var room *Room
+	if err := json.NewDecoder(response.Body).Decode(&room); err != nil {
+		return nil, fmt.Errorf("error decoding get room response: %w", err)
+	}
+
+	return room, nil
+}
+
+func (c *client) ListScenes() ([]*Scene, error) {
+	targetURL := fmt.Sprintf("https://%s/scenes", c.endpoint)
+	response, err := c.httpClient.Get(targetURL)
+	if err != nil {
+		return nil, fmt.Errorf("error listing scenes from %s: %w", targetURL, err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("error listing scenes from %s: Received status code %d", targetURL, response.StatusCode)
+	}
+
+	var scenes []*Scene
+	if err := json.NewDecoder(response.Body).Decode(&scenes); err != nil {
+		return nil, fmt.Errorf("error decoding scenes response: %w", err)
+	}
+
+	return scenes, nil
+}
+
+func (c *client) GetScene(sceneID string) (*Scene, error) {
+	targetURL := fmt.Sprintf("https://%s/scenes/%s", c.endpoint, sceneID)
+	response, err := c.httpClient.Get(targetURL)
+	if err != nil {
+		return nil, fmt.Errorf("error reading scene %s from %s: %w", sceneID, targetURL, err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("error reading scene %s from %s: Received status code %d", sceneID, targetURL, response.StatusCode)
+	}
+
+	var scene *Scene
+	if err := json.NewDecoder(response.Body).Decode(&scene); err != nil {
+		return nil, fmt.Errorf("error decoding get scene response: %w", err)
+	}
+
+	return scene, nil
+}
+
+func (c *client) ListUsers() ([]*User, error) {
+	targetURL := fmt.Sprintf("https://%s/users", c.endpoint)
+	response, err := c.httpClient.Get(targetURL)
+	if err != nil {
+		return nil, fmt.Errorf("error listing users from %s: %w", targetURL, err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("error listing users from %s: Received status code %d", targetURL, response.StatusCode)
+	}
+
+	var users []*User
+	if err := json.NewDecoder(response.Body).Decode(&users); err != nil {
+		return nil, fmt.Errorf("error decoding users response: %w", err)
+	}
+
+	return users, nil
+}
+
+func (c *client) GetUser(userID string) (*User, error) {
+	targetURL := fmt.Sprintf("https://%s/users/%s", c.endpoint, userID)
+	response, err := c.httpClient.Get(targetURL)
+	if err != nil {
+		return nil, fmt.Errorf("error reading user %s from %s: %w", userID, targetURL, err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("error reading user %s from %s: Received status code %d", userID, targetURL, response.StatusCode)
+	}
+
+	var user *User
+	if err := json.NewDecoder(response.Body).Decode(&user); err != nil {
+		return nil, fmt.Errorf("error decoding get user response: %w", err)
+	}
+
+	return user, nil
+}
+
+func (c *client) GetCurrentUser() (*User, error) {
+	targetURL := fmt.Sprintf("https://%s/users/me", c.endpoint)
+	response, err := c.httpClient.Get(targetURL)
+	if err != nil {
+		return nil, fmt.Errorf("error reading current user from %s: %w", targetURL, err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("error reading current user from %s: Received status code %d", targetURL, response.StatusCode)
+	}
+
+	var user *User
+	if err := json.NewDecoder(response.Body).Decode(&user); err != nil {
+		return nil, fmt.Errorf("error decoding get current user response: %w", err)
+	}
+
+	return user, nil
+}
+
+func (c *client) DeleteUser(userID string) error {
+	targetURL := fmt.Sprintf("https://%s/users/%s", c.endpoint, userID)
+	request, err := http.NewRequest("DELETE", targetURL, nil)
+	if err != nil {
+		return fmt.Errorf("error creating delete call for user %s: %w", userID, err)
+	}
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return fmt.Errorf("error removing user %s from %s: %w", userID, targetURL, err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("error removing user %s from %s: Received status code %d", userID, targetURL, response.StatusCode)
+	}
+
+	return nil
 }
 
 func (c *client) RegisterEventHandler(handler EventHandler, eventTypes ...string) {
@@ -172,8 +395,13 @@ func (c *client) StopEventListening() error {
 	if c.eventLoopRunning {
 		c.eventLoopRunning = false
 		if c.websocketConnection != nil {
+			err := c.websocketConnection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+			if err != nil {
+				return err
+			}
 			return c.websocketConnection.Close()
 		}
 	}
+
 	return nil
 }
