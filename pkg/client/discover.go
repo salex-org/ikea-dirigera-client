@@ -9,11 +9,11 @@ import (
 )
 
 type DirigeraHub struct {
-	HostName        string
-	Address         string
-	Port            int
-	SerialNumber    string
-	FirmwareVersion string
+	HostName        string `json:"hostname"`
+	Address         string `json:"address"`
+	Port            int    `json:"port"`
+	SerialNumber    string `json:"serial_number"`
+	FirmwareVersion string `json:"firmware_version"`
 }
 
 // Scan searches for IKEA Smart-Home hubs in the network using mDNS.

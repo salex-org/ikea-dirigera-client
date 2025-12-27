@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"syscall"
 
 	"github.com/google/uuid"
+	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/salex-org/ikea-dirigera-client/pkg/client"
 	"github.com/zalando/go-keyring"
 )
@@ -36,7 +38,12 @@ func main() {
 		fmt.Println("Usage: ikea <command>")
 		return
 	}
-
+	jsonOutput := false
+	if len(os.Args) > 3 {
+		if os.Args[2] == "-o" && os.Args[3] == "json" {
+			jsonOutput = true
+		}
+	}
 	switch os.Args[1] {
 	case "token":
 		err := initialize(&currentContext)
@@ -44,8 +51,8 @@ func main() {
 			log.Fatal(err)
 		}
 		showToken(currentContext)
-	case "scan":
-		listHubs()
+	case "hubs":
+		listHubs(jsonOutput)
 	case "authorize":
 		err := authorize(&currentContext)
 		if err != nil {
@@ -76,16 +83,30 @@ func showToken(cliContext Context) {
 	fmt.Printf("Token: %s\n", cliContext.Authorization.AccessToken)
 }
 
-func listHubs() {
+func listHubs(jsonOutput bool) {
 	hubs, err := client.Scan()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("Found %d hubs:\n", len(hubs))
-	for i, hub := range hubs {
-		fmt.Printf("%d. Hub %s at %s port %d\tSerial-# %s\tFirmware %s\n", i+1, hub.HostName, hub.Address, hub.Port, hub.SerialNumber, hub.FirmwareVersion)
+	if jsonOutput {
+		enc := json.NewEncoder(os.Stdout)
+		_ = enc.Encode(hubs)
+		return
 	}
+
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{"Hostname", "IP", "Port", "Serial Number", "Firmware Version"})
+	for _, hub := range hubs {
+		t.AppendRow(table.Row{
+			hub.HostName, hub.Address, hub.Port, hub.SerialNumber, hub.FirmwareVersion,
+		})
+	}
+	t.SetStyle(table.StyleDefault)
+	t.SetAutoIndex(true)
+	fmt.Printf("Found %d hubs:\n\n", len(hubs))
+	t.Render()
 }
 
 func listenForEvents(cliContext Context) {
@@ -135,7 +156,17 @@ func listDevices(cliContext Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Found %d devices in %s:\n", len(devices), cliContext.Name)
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{"ID", "Class", "Type", "Reachable"})
+	for _, device := range devices {
+		t.AppendRow(table.Row{
+			device.ID, device.Type, device.DetailedType, device.IsReachable,
+		})
+	}
+	t.SetStyle(table.StyleLight)
+	fmt.Printf("Found %d devices in %s:\n\n", len(devices), cliContext.Name)
+	t.Render()
 }
 
 func initialize(context *Context) error {
