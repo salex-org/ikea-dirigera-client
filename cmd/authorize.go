@@ -5,7 +5,7 @@ package cmd
 
 import (
 	"fmt"
-	"net"
+	"net/netip"
 	"os"
 	"os/user"
 	"strings"
@@ -24,8 +24,8 @@ var authorizeCmd = &cobra.Command{
 		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
 			return err
 		}
-		if net.ParseIP(args[0]) == nil {
-			return fmt.Errorf("invalid IP address: %s", args[0])
+		if _, err := netip.ParseAddr(args[0]); err != nil {
+			return fmt.Errorf("invalid IP address: %w", err)
 		}
 		return nil
 	},
