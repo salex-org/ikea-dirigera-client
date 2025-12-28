@@ -67,7 +67,7 @@ type Info struct {
 type User struct {
 	ID        string    `json:"uid"`
 	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"createdAt"`
+	CreatedAt time.Time `json:"createdTimestamp"`
 }
 
 type EventHandler func(Event)
