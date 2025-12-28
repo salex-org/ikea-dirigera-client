@@ -30,5 +30,5 @@ The current version is work in progress that does not cover all functions and ha
 |           | device     | <id>   | --output <format> --context <name>          | Shows information about the device                           |       |
 | delete    | context    | <name> | --context <name>                            | Deletes the context and the user                             |       |
 |           | user       | <id>   | --context <name>                            | Deletes the user                                             |       |
-| curl      |            | <url>  | --context <name>                            | Calls the url in the current context                         |       | 
+| curl      |            | <url>  | --context <name>                            | Calls the url in the current context                         | y     | 
 | listen    |            |        | --context <name>                            | Listens for events                                           | y     |
