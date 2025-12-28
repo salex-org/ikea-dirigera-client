@@ -31,4 +31,4 @@ The current version is work in progress that does not cover all functions and ha
 | delete    | context    | <name> | --context <name>                            | Deletes the context and the user                             |       |
 |           | user       | <id>   | --context <name>                            | Deletes the user                                             |       |
 | curl      |            | <url>  | --context <name>                            | Calls the url in the current context                         |       | 
-| listen    |            |        | --context <name>                            | Listens for events                                           |       |
+| listen    |            |        | --context <name>                            | Listens for events                                           | y     |

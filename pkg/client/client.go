@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"slices"
 	"time"
@@ -93,6 +94,7 @@ type Client interface {
 	ListenForEvents() error
 	StopEventListening() error
 	GetEventLoopState() error
+	Get(url string) (string, error)
 }
 
 type client struct {
@@ -425,4 +427,28 @@ func (c *client) StopEventListening() error {
 	}
 
 	return nil
+}
+
+func (c *client) Get(path string) (string, error) {
+	base, err := url.Parse(fmt.Sprintf("https://%s", c.endpoint))
+	if err != nil {
+		return "", fmt.Errorf("error parsing address %q: %w", c.endpoint, err)
+	}
+	targetURL := base.JoinPath(path).String()
+	response, err := c.httpClient.Get(targetURL)
+	if err != nil {
+		return "", fmt.Errorf("error calling %s: %w", targetURL, err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("error calling %s: Received status code %d", targetURL, response.StatusCode)
+	}
+
+	bodyBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", fmt.Errorf("error reading response body: %w", err)
+	}
+
+	return string(bodyBytes), nil
 }
