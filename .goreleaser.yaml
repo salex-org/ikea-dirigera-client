@@ -7,7 +7,7 @@ before:
 
 builds:
   - id: ikea-dirigera-cli
-    main: ./cmd/main.go
+    main: ./main.go
     binary: ikea
     env:
       - CGO_ENABLED=0

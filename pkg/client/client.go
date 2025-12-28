@@ -79,6 +79,7 @@ type handlerRegistration struct {
 type Client interface {
 	ListDevices() ([]*Device, error)
 	GetDevice(deviceID string) (*Device, error)
+	GetHubStatus() (*Device, error)
 	ListRooms() ([]*Room, error)
 	GetRoom(roomID string) (*Room, error)
 	ListScenes() ([]*Scene, error)
@@ -150,6 +151,26 @@ func (c *client) ListDevices() ([]*Device, error) {
 	}
 
 	return devices, nil
+}
+
+func (c *client) GetHubStatus() (*Device, error) {
+	targetURL := fmt.Sprintf("https://%s/hub/status", c.endpoint)
+	response, err := c.httpClient.Get(targetURL)
+	if err != nil {
+		return nil, fmt.Errorf("error reading hub status from %s: %w", targetURL, err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("error reading hub status from %s: Received status code %d", targetURL, response.StatusCode)
+	}
+
+	var device *Device
+	if err := json.NewDecoder(response.Body).Decode(&device); err != nil {
+		return nil, fmt.Errorf("error decoding hub status response: %w", err)
+	}
+
+	return device, nil
 }
 
 func (c *client) GetDevice(deviceID string) (*Device, error) {
