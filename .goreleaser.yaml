@@ -9,6 +9,11 @@ builds:
   - id: ikea-dirigera-cli
     main: ./main.go
     binary: ikea
+    ldflags:
+      - -s -w
+      - -X github.com/salex-org/ikea-dirigera-client/cmd.version={{ .Version }}
+      - -X github.com/salex-org/ikea-dirigera-client/cmd.commit={{ .Commit }}
+      - -X github.com/salex-org/ikea-dirigera-client/cmd.date={{ .Date }}
     env:
       - CGO_ENABLED=0
     goos:
@@ -40,7 +45,7 @@ homebrew_casks:
 checksum:
   name_template: "checksums.txt"
 snapshot:
-  version_template: "{{ incpatch .Version }}-snapshot"
+  version_template: "v{{ incpatch .Version }}-snapshot"
 #changelog:
 #  sort: asc
 #  filters:
