@@ -25,7 +25,7 @@ hubs, err := client.Scan()
 // Iterate hubs
 ```
 
-Authorize a user in your IKEA DIRIGERA Hub and create a context in the CLI (replace `192.168.1.1` with the IP of your hub):
+Authorize a user in your IKEA DIRIGERA Hub (replace `192.168.1.1` with the IP and `8443` with the port of your hub):
 
 ```go
 import "github.com/salex-org/ikea-dirigera-client/pkg/client"
@@ -48,7 +48,7 @@ fmt.Printf("success\n")
 // Keep AccessToken and TLSFingerprint from auth in a secure place
 ```
 
-Create a client instance to call the API:
+Create a client instance to call the API (replace `192.168.1.1` with the IP and `8443` with the port of your hub):
 
 ```go
 import "github.com/salex-org/ikea-dirigera-client/pkg/client"
