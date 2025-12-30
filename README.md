@@ -45,7 +45,7 @@ if err != nil {
 }
 fmt.Printf("success\n")
 
-// use AccessToken and TLSFingerprint from auth
+// Keep AccessToken and TLSFingerprint from auth in a secure place
 ```
 
 Create a client instance to call the API:
@@ -62,7 +62,7 @@ auth := &client.Authorization{
 
 dirigeraClient := client.Connect(context.Address, context.Port, auth)
 
-// use dirigeraClient to call the API
+// Use dirigeraClient to call the API
 ```
 
 ## Install and use the CLI
