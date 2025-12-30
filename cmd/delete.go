@@ -33,11 +33,11 @@ var deleteContextCmd = &cobra.Command{
 		dirigeraClient := getDirigeraClient(context)
 		currentUser, err := dirigeraClient.GetCurrentUser()
 		if err != nil {
-			fmt.Printf("warning: could not get current user: %w", err)
+			fmt.Printf("warning: could not get current user: %v", err)
 		}
 		err = dirigeraClient.DeleteUser(currentUser.ID)
 		if err != nil {
-			fmt.Printf("warning: could not delete user: %w", err)
+			fmt.Printf("warning: could not delete user: %v", err)
 		}
 
 		delete(appConfig.Contexts, contextName)

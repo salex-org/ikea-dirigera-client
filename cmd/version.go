@@ -25,7 +25,7 @@ var versionCmd = &cobra.Command{
 
 		usedContext, usedContextName, err := getContext(cmd)
 		if err != nil {
-			fmt.Printf("No version info for Hub available\n", version, commit, date)
+			fmt.Printf("No version info for Hub available\n")
 			return nil
 		}
 		dirigeraClient := getDirigeraClient(usedContext)
