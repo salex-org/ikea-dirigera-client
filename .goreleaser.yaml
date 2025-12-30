@@ -38,22 +38,21 @@ release:
   draft: false
   prerelease: false
 
-homebrew_casks:
+brew:
   - name: ikea-dirigera-cli
+    homepage: "https://github.com/salex-org/ikea-dirigera-client"
+    description: "A CLI for the IKEA DIRIGERA Smart-Home-Hub"
+    license: MIT
     repository:
       owner: salex-org
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    homepage: "https://github.com/salex-org/ikea-dirigera-client"
-    description: "A CLI for the IKEA DIRIGERA Smart-Home-Hub"
-    license: MIT
 
 checksum:
   name_template: "checksums.txt"
 
 snapshot:
   version_template: "v{{ incpatch .Version }}-snapshot"
-
 
 #changelog:
 #  sort: asc
