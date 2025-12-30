@@ -53,10 +53,3 @@ checksum:
 
 snapshot:
   version_template: "v{{ incpatch .Version }}-snapshot"
-
-#changelog:
-#  sort: asc
-#  filters:
-#    exclude:
-#      - "^docs:"
-#      - "^test:"
