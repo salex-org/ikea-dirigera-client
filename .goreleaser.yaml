@@ -31,21 +31,31 @@ archives:
         formats: [ 'zip' ]
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 
+release:
+  github:
+    owner: salex-org
+    name: ikea-dirigera-client
+  draft: false
+  prerelease: false
+
 # Empfohlener Weg ab v2.10 für Homebrew (Taps)
-homebrew_casks:
-  - name: ikea-dirigera-cli
-    repository:
-      owner: salex-org
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    homepage: "https://github.com/salex-org/ikea-dirigera-client"
-    description: "A CLI for the IKEA DIRIGERA Smart-Home-Hub"
-    license: MIT
+#homebrew_casks:
+#  - name: ikea-dirigera-cli
+#    repository:
+#      owner: salex-org
+#      name: homebrew-tap
+#      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+#    homepage: "https://github.com/salex-org/ikea-dirigera-client"
+#    description: "A CLI for the IKEA DIRIGERA Smart-Home-Hub"
+#    license: MIT
 
 checksum:
   name_template: "checksums.txt"
+
 snapshot:
   version_template: "v{{ incpatch .Version }}-snapshot"
+
+
 #changelog:
 #  sort: asc
 #  filters:
