@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -9,9 +10,9 @@ import (
 	"net/url"
 	"os"
 	"slices"
+	"sync"
 	"time"
 
-	"github.com/avast/retry-go/v4"
 	"github.com/gorilla/websocket"
 )
 
@@ -102,7 +103,9 @@ type client struct {
 	authorization       *Authorization
 	endpoint            string
 	registrations       []handlerRegistration
-	eventLoopRunning    bool
+	eventLoopMutex      sync.Mutex
+	eventLoopContext    context.Context
+	eventLoopCancelFunc context.CancelFunc
 	eventLoopError      error
 	eventLog            io.Writer
 	websocketDialer     *websocket.Dialer
@@ -130,8 +133,9 @@ func Connect(address string, port int, authorization *Authorization) Client {
 		websocketDialer: &websocket.Dialer{
 			TLSClientConfig: tlsConfig,
 		},
-		eventLoopRunning: false,
-		eventLog:         os.Stdout,
+		eventLoopContext:    nil,
+		eventLoopCancelFunc: nil,
+		eventLog:            os.Stdout,
 	}
 }
 
@@ -366,41 +370,81 @@ func (c *client) SetEventLog(writer io.Writer) {
 }
 
 func (c *client) ListenForEvents() error {
-	if c.eventLoopRunning {
+	c.eventLoopMutex.Lock()
+	if c.eventLoopContext != nil {
+		c.eventLoopMutex.Unlock()
 		return fmt.Errorf("Event loop already running")
 	}
-	c.eventLoopRunning = true
-	return retry.Do(c.eventLoop, retry.DelayType(func(n uint, loopErr error, config *retry.Config) time.Duration {
-		c.eventLoopError = loopErr
-		_, _ = fmt.Fprintf(c.eventLog, "Error in event loop: %v\nRestarting event loop in 30 seconds\n", loopErr)
-		return 30 * time.Second
-	}), retry.Attempts(0))
+	c.eventLoopContext, c.eventLoopCancelFunc = context.WithCancel(context.Background())
+	c.eventLoopError = nil
+	c.eventLoopMutex.Unlock()
+
+	for {
+		if err := c.eventLoop(); err != nil {
+			c.eventLoopMutex.Lock()
+			c.eventLoopError = err
+			c.eventLoopMutex.Unlock()
+
+			// "Echter" Fehler nur, wenn der EventLoopContext nich beendet wurde
+			select {
+			case <-c.eventLoopContext.Done():
+			default:
+				_, _ = fmt.Fprintf(c.eventLog, "Error in event loop: %v\nRestarting event loop in 30 seconds\n", err)
+			}
+
+			timer := time.NewTimer(30 * time.Second)
+			select {
+			case <-timer.C:
+
+				c.eventLoopMutex.Lock()
+				c.eventLoopError = nil
+				c.eventLoopMutex.Unlock()
+
+				continue
+			case <-c.eventLoopContext.Done():
+				if !timer.Stop() {
+					<-timer.C
+				}
+
+				c.eventLoopMutex.Lock()
+				c.eventLoopError = nil
+				c.eventLoopCancelFunc = nil
+				c.eventLoopContext = nil
+				c.eventLoopMutex.Unlock()
+
+				return nil
+			}
+		}
+	}
 }
 
 func (c *client) eventLoop() error {
+	var err error
+
 	websocketURL := fmt.Sprintf("wss://%s", c.endpoint)
 	websocketHeader := http.Header{}
 	websocketHeader.Set("Authorization", "Bearer "+c.authorization.AccessToken)
-	c.eventLoopError = nil // Reset error cache
-	var err error
+
+	c.eventLoopMutex.Lock()
 	c.websocketConnection, _, err = c.websocketDialer.Dial(websocketURL, websocketHeader)
+	c.eventLoopMutex.Unlock()
 	if err != nil {
 		return err
 	}
 	defer func(conn *websocket.Conn) {
 		_, _ = fmt.Fprintf(c.eventLog, "\U0001F6AB Closing connection to %s\n", conn.RemoteAddr().String())
 		_ = conn.Close()
+
+		c.eventLoopMutex.Lock()
+		c.websocketConnection = nil
+		c.eventLoopMutex.Unlock()
 	}(c.websocketConnection)
 	_, _ = fmt.Fprintf(c.eventLog, "\U0001F50C Established connection to %v\n", c.websocketConnection.RemoteAddr())
 	for {
 		event := &Event{}
 		err := c.websocketConnection.ReadJSON(event)
 		if err != nil {
-			if c.eventLoopRunning {
-				return err
-			} else {
-				return nil // Error occurred because of terminating the event loop - returning without error
-			}
+			return err
 		}
 		for _, registration := range c.registrations {
 			if len(registration.Types) == 0 || slices.Contains(registration.Types, event.Type) {
@@ -415,13 +459,17 @@ func (c *client) GetEventLoopState() error {
 }
 
 func (c *client) StopEventListening() error {
-	if c.eventLoopRunning {
-		c.eventLoopRunning = false
+	c.eventLoopMutex.Lock()
+	defer c.eventLoopMutex.Unlock()
+
+	if c.eventLoopCancelFunc != nil {
+		c.eventLoopCancelFunc()
 		if c.websocketConnection != nil {
 			err := c.websocketConnection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
 				return err
 			}
+
 			return c.websocketConnection.Close()
 		}
 	}
