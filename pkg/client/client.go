@@ -32,6 +32,7 @@ type Device struct {
 	CreatedAt    time.Time              `json:"createdAt"`
 	LastSeen     time.Time              `json:"lastSeen"`
 	Attributes   map[string]interface{} `json:"attributes"`
+	Room         Room                   `json:"room"`
 }
 
 type Room struct {
